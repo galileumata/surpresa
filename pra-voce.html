@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Uma surpresa pra Sabrina ✨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f1724; /* dark navy */
+      --card:#0b1220;
+      --accent:#ff6b81; /* pink */
+      --accent-2:#6be3ff; /* cyan */
+      --glass: rgba(255,255,255,0.04);
+      --text:#e6eef8;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(107,227,255,0.04), transparent),
+                  linear-gradient(180deg,#071024 0%,var(--bg) 100%);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .card{
+      width:100%;
+      max-width:720px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:20px;
+      padding:28px;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.7);
+      position:relative;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .top{
+      display:flex;
+      gap:16px;
+      align-items:center;
+    }
+    .logo{
+      width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:20px;flex-shrink:0;
+      box-shadow:0 6px 20px rgba(107,227,255,0.06);
+    }
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 0;color:rgba(230,238,248,0.8)}
+
+    .stage{
+      margin-top:22px;
+      min-height:220px;
+      display:flex;align-items:center;justify-content:center;flex-direction:column;
+    }
+
+    .typed{
+      font-weight:600;font-size:18px;letter-spacing:0.2px;min-height:36px;text-align:center;
+    }
+
+    .btn{
+      margin-top:18px;padding:12px 20px;border-radius:999px;border:none;cursor:pointer;font-weight:600;
+      background:linear-gradient(90deg,var(--accent),#ff8ba2);color:white;box-shadow:0 8px 24px rgba(255,107,129,0.14);
+      transform:translateY(0);transition:transform .18s ease,box-shadow .18s ease;
+    }
+    .btn:active{transform:translateY(1px);}
+
+    .reveal{
+      margin-top:18px;padding:20px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);text-align:center;opacity:0;transform:translateY(18px) scale(.98);
+      transition:all .6s cubic-bezier(.2,.9,.3,1);
+    }
+    .reveal.show{opacity:1;transform:translateY(0) scale(1)}
+
+    .message{
+      font-size:18px;font-weight:700;margin:0 0 8px;color:var(--accent);
+    }
+    .submsg{margin:0;color:rgba(230,238,248,0.9)}
+
+    .heart{
+      width:80px;height:80px;margin:12px auto 0;background:linear-gradient(135deg,#ff9db3,#ff6b81);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(255,107,129,0.16);
+      transform:scale(.6);opacity:0;transition:all .6s cubic-bezier(.2,.9,.3,1);
+    }
+    .heart.show{transform:scale(1);opacity:1}
+
+    /* small footer */
+    .hint{position:absolute;bottom:12px;right:18px;font-size:12px;color:rgba(230,238,248,0.35)}
+
+    /* responsive */
+    @media (max-width:520px){
+      .card{padding:18px}
+      .typed{font-size:16px}
+      .message{font-size:16px}
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <div class="top">
+      <div class="logo">S</div>
+      <div>
+        <h1>Surpresa pra você</h1>
+        <p class="lead">Abra, clique e veja — é só pra você 💫</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="typed" id="typed">Carregando...</div>
+      <button class="btn" id="cta">Ver agora</button>
+
+      <div class="reveal" id="reveal">
+        <div class="message" id="title">Oi, Sabrina — olha só!</div>
+        <div class="submsg" id="content">Você é incrivel!❤️❤️❤️</div>
+        <div class="heart" id="heart">❤️</div>
+      </div>
+    </div>
+
+  </div>
+
+  <canvas id="confetti" style="position:fixed;left:0;top:0;pointer-events:none;z-index:40;
+    width:100%;height:100%;display:none;"></canvas>
+
+  <script>
+    const PERSON = 'Sabrina';
+    const LINES = [
+      `Tenho algo pra te mostrar, ${PERSON}...`,
+      'Promete que vai olhar até o final? 😉'
+    ];
+    const FINAL_TITLE = `Oi, ${PERSON} — olha só!`;
+    const FINAL_MSG = 'Você é incrivel!❤️❤️❤️';
+
+    const typedEl = document.getElementById('typed');
+    let lineIndex = 0;
+
+    function typeLine(line, el, cb){
+      el.textContent = '';
+      let i=0;
+      const speed = 36 + Math.random() * 28;
+      const t = setInterval(()=>{
+        el.textContent += line.charAt(i);
+        i++;
+        if(i>=line.length){clearInterval(t);setTimeout(cb,600)}
+      },speed);
+    }
+
+    function startTyping(){
+      if(lineIndex >= LINES.length){typedEl.textContent='';return}
+      typeLine(LINES[lineIndex], typedEl, ()=>{lineIndex++; startTyping();});
+    }
+
+    const cta = document.getElementById('cta');
+    const reveal = document.getElementById('reveal');
+    const title = document.getElementById('title');
+    const content = document.getElementById('content');
+    const heart = document.getElementById('heart');
+
+    cta.addEventListener('click', ()=>{
+      cta.disabled = true; cta.style.opacity = .9;
+
+      title.textContent = FINAL_TITLE;
+      content.textContent = FINAL_MSG;
+      reveal.classList.add('show');
+      heart.classList.add('show');
+      launchConfetti();
+  
+      typedEl.textContent = '✨ Revelado ✨';
+    });
+
+
+    function launchConfetti(){
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      canvas.style.display='block';
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+
+      const colors = ['#ff6b81','#ff9db3','#6be3ff','#ffd36b'];
+      let pieces = [];
+      for(let i=0;i<120;i++){
+        pieces.push({
+          x:Math.random()*canvas.width,
+          y:Math.random()*-canvas.height,
+          w:6+Math.random()*8,
+          h:6+Math.random()*8,
+          color:colors[Math.floor(Math.random()*colors.length)],
+          rot:Math.random()*360,
+          velX:(Math.random()-0.5)*2,
+          velY:2+Math.random()*6
+        });
+      }
+
+      let runs=0;
+      function frame(){
+        runs++;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for(const p of pieces){
+          p.x += p.velX; p.y += p.velY; p.rot += 6;
+          ctx.save();
+          ctx.translate(p.x,p.y);
+          ctx.rotate(p.rot * Math.PI/180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+          ctx.restore();
+        }
+        if(runs<130) requestAnimationFrame(frame); else {canvas.style.display='none';}
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // start
+    startTyping();
+
+    // small accessibility: press Enter to reveal
+    document.addEventListener('keydown', e=>{ if(e.key==='Enter') cta.click(); });
+  </script>
+</body>
+</html>
